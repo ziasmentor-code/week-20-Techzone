@@ -315,6 +315,44 @@ function Home() {
           ))}
         </div>
       </div>
+      <div className="w-full px-6 md:px-14 py-8">
+  <div className="relative w-full min-h-[500px] rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row items-center hero-gradient border border-white/5">
+    
+    {/* Left Side: Image */}
+    <div className="flex-1 p-10 flex justify-center items-center">
+      <div className="relative group">
+        <img 
+          src="/images/simg.png" // നിങ്ങളുടെ ഇമേജ് പാത്ത് ഇവിടെ നൽകുക
+          alt="Redme Features" 
+          className="w-full h-[600px] max-w-[850px] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-700"
+        />
+        {/* Unboxed Badge */}
+        <div className="absolute top-0 left-0 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
+          <span className="text-white font-black text-xl">UNBOXED</span>
+          <p className="text-[10px] text-gray-400">BY TECHZONE</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Right Side: Content */}
+    <div className="flex-1 p-10 md:pr-24 text-left">
+      <h2 className="text-white text-5xl md:text-7xl font-black leading-tight mb-6">
+        Google Pixel 9a, 256 GB, 8 GB RAM, Obsidian, Mobile Phone <br /> 
+        <span className="text-gray-400">features that make it a worthy upgrade</span>
+      </h2>
+      <p className="text-xl text-gray-400 mb-10 font-medium">Drool-worthy features</p>
+      
+      <button 
+        onClick={() => navigate("/product")}
+        className="bg-[#00e676] hover:bg-white text-black font-black py-4 px-10 rounded-xl transition-all flex items-center gap-3 group"
+      >
+        Read Now
+        <span className="group-hover:translate-x-2 transition-transform">→</span>
+      </button>
+    </div>
+
+  </div>
+</div>
 
 <div className="w-full px-6 md:px-14 py-20 bg-black">
   <div className="flex items-center gap-4 mb-16">

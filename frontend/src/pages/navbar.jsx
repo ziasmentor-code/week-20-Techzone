@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
 import { User, ShoppingCart, Heart, Package, LogOut, Search, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useCart } from '../context/CartContext'; // Context import cheythu
 
 function Navbar() {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 1. Cart Context-il ninnu count edukkuka
+  const { cartCount } = useCart();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -63,9 +68,14 @@ function Navbar() {
             <Search size={22} />
           </button>
           
+          {/* 2. Cart Icon with dynamic count */}
           <button onClick={() => navigate("/cart")} className="relative hover:text-[#00e676] transition">
             <ShoppingCart size={24} />
-            <span className="absolute -top-2 -right-2 bg-[#00e676] text-black text-[10px] font-bold px-1.5 rounded-full">0</span>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-[#00e676] text-black text-[10px] font-bold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-black transition-all animate-in zoom-in">
+                {cartCount}
+              </span>
+            )}
           </button>
 
           <button 
@@ -137,7 +147,6 @@ function Navbar() {
   );
 }
 
-// Sidebar Menu Link Component
 function MenuLink({ icon, label, onClick }) {
   return (
     <button 

@@ -1,16 +1,11 @@
-import { Navigate, useLocation } from "react-router-dom";
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 
 const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
-  const location = useLocation();
+  // നിങ്ങളുടെ ലോഗിൻ സിസ്റ്റം അനുസരിച്ച് ഇത് മാറ്റുക (ഉദാഹരണത്തിന് localStorage-ൽ ടോക്കൺ ഉണ്ടോ എന്ന് നോക്കാം)
+  const isAuthenticated = localStorage.getItem('token'); 
 
-  
-  if (token && isAdmin) {
-    return children;
-  }
-
-  
+  return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 export default PrivateRoute;

@@ -1,122 +1,152 @@
-import { useState } from "react";
-import { User, ShoppingCart, MapPin, Menu, Search } from "lucide-react";
-
+import { useState, useEffect } from "react";
+import { User, ShoppingCart, Heart, Package, LogOut, Search, X } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Navbar() {
   const [open, setOpen] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, [location]);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+    setOpen(false);
+    navigate("/login");
+    window.location.reload();
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${searchQuery}`);
+    }
+  };
 
   return (
     <>
-     
-      <nav className="fixed top-0 left-0 w-full bg-black text-white px-6 py-5 flex items-center justify-between z-50 shadow-md">
+      {/* --- Main Navigation --- */}
+      <nav className="fixed top-0 left-0 w-full bg-black text-white px-4 md:px-10 py-4 flex items-center justify-between z-50 shadow-2xl border-b border-white/10">
         
+        {/* Logo */}
+        <h1 
+          className="text-2xl font-black tracking-tighter cursor-pointer text-[#00e676]" 
+          onClick={() => navigate("/")}
+        >
+          TECHZONE
+        </h1>
 
+        {/* --- Search Bar --- */}
+        <form 
+          onSubmit={handleSearch}
+          className="hidden md:flex flex-1 max-w-md mx-8 relative group"
+        >
+          <input 
+            type="text"
+            placeholder="Search for products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white/10 border border-white/20 rounded-full py-2 px-12 outline-none focus:border-[#00e676] focus:ring-1 focus:ring-[#00e676] transition-all"
+          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#00e676]" size={18} />
+        </form>
+
+        {/* Icons */}
         <div className="flex items-center gap-6">
-          <h1 className="text-2xl font-bold tracking-wide cursor-pointer">
-            TechZone
-          </h1>
-{/* 
-          <button className="flex items-center gap-2 text-sm opacity-80 hover:opacity-100 transition">
-            <Menu size={20} />
-            <span className="font-medium">Menu</span>
-          </button> */}
-        </div>
+          <button className="md:hidden text-gray-400">
+            <Search size={22} />
+          </button>
+          
+          <button onClick={() => navigate("/cart")} className="relative hover:text-[#00e676] transition">
+            <ShoppingCart size={24} />
+            <span className="absolute -top-2 -right-2 bg-[#00e676] text-black text-[10px] font-bold px-1.5 rounded-full">0</span>
+          </button>
 
-        {/* SEARCH */}
-        <div className="flex-1 mx-12 relative hidden md:block">
-          <div className="relative group">
-            <Search
-              size={20}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer group-hover:text-black transition"
-            />
-            <input
-              type="text"
-              placeholder="What are you looking for?"
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-              className="w-full px-5 py-2.5 bg-white rounded text-black outline-none text-sm placeholder:text-gray-400 shadow-sm transition-all focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-
-          {isSearchFocused && (
-            <div className="absolute top-[110%] left-0 w-full bg-[#1a1a1a] text-white p-5 rounded-md shadow-2xl z-50 border border-gray-800 animate-in fade-in slide-in-from-top-2 duration-200">
-              <p className="text-xs font-bold mb-3 uppercase tracking-wider text-gray-500">
-                Trending Searches
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {['Iphone 17', 'Iphone 16', 'Laptop', 'Monitor', 'Washing Machine'].map((item) => (
-                  <span 
-                    key={item} 
-                    className="text-xs bg-[#333] px-4 py-1.5 rounded-full cursor-pointer hover:bg-white hover:text-black transition-all duration-200"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-1 text-sm opacity-80 cursor-pointer hover:opacity-100">
-            <MapPin size={18} />
-            <span>Kerala</span>
-          </div>
-
-          <div className="relative cursor-pointer group">
-            <ShoppingCart size={24} className="group-hover:scale-110 transition" />
-            <span className="absolute -top-2 -right-2 bg-green-500 text-[10px] font-bold px-1.5 rounded-full">0</span>
-          </div>
-
-          <button onClick={() => setOpen(true)} className="hover:scale-110 transition">
-            <User size={24} />
+          <button 
+            onClick={() => setOpen(true)} 
+            className="flex items-center gap-2 border border-white/20 px-3 py-1.5 rounded-full hover:bg-white/10 transition"
+          >
+            <User size={20} />
+            <span className="hidden md:block text-xs font-bold uppercase tracking-widest">Account</span>
           </button>
         </div>
       </nav>
 
-      
-      <div className="h-20 md:h-24 bg-black"></div>
+      <div className="h-20 bg-black"></div>
 
-      {open && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-60 z-[60] backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      {/* --- Sidebar Overlay --- */}
+      {open && <div className="fixed inset-0 bg-black/80 z-[60] backdrop-blur-md" onClick={() => setOpen(false)} />}
 
-      <div
-        className={`fixed top-0 right-0 h-full w-80 bg-black text-white z-[70] transform transition-transform duration-300 ease-in-out border-l border-gray-800 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="p-8 space-y-8">
-          <div className="flex justify-between items-center border-b border-gray-800 pb-4">
-            <h2 className="text-xl font-bold italic">TechZone</h2>
-            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white">✕</button>
+      {/* --- User Sidebar --- */}
+      <div className={`fixed top-0 right-0 h-full w-85 bg-[#111] text-white z-[70] transform transition-transform duration-500 ease-in-out shadow-2xl ${open ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="p-8 flex flex-col h-full">
+          
+          {/* Sidebar Header */}
+          <div className="flex justify-between items-center mb-10">
+            <div>
+              <h2 className="text-2xl font-black tracking-tighter">MY ACCOUNT</h2>
+              <div className="h-1 w-10 bg-[#00e676] mt-1"></div>
+            </div>
+            <button onClick={() => setOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition">
+              <X size={24} />
+            </button>
           </div>
 
-          <ul className="space-y-5 text-md font-medium">
-            <li className="hover:text-blue-400 transition cursor-pointer">My Profile</li>
-            <li className="hover:text-blue-400 transition cursor-pointer">My Address</li>
-            <li className="hover:text-blue-400 transition cursor-pointer">My Orders</li>
-            <li className="hover:text-blue-400 transition cursor-pointer">Wishlist</li>
-            <li className="hover:text-blue-400 transition cursor-pointer">Devices & Plans</li>
-            <li className="hover:text-blue-400 transition cursor-pointer">Service Requests</li>
-          </ul>
+          {/* Menu Options */}
+          <div className="flex-1 space-y-2">
+            {isLoggedIn ? (
+              <>
+                <MenuLink icon={<User size={20}/>} label="My Profile" onClick={() => {navigate("/profile"); setOpen(false);}} />
+                <MenuLink icon={<Package size={20}/>} label="My Orders" onClick={() => {navigate("/orders"); setOpen(false);}} />
+                <MenuLink icon={<Heart size={20}/>} label="Wishlist" onClick={() => {navigate("/wishlist"); setOpen(false);}} />
+                
+                <div className="pt-8 mt-8 border-t border-white/10">
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-4 p-4 text-red-500 hover:bg-red-500/10 rounded-2xl transition font-bold"
+                  >
+                    <LogOut size={20} /> Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-gray-400 mb-6">Login to manage your orders and profile.</p>
+                <button 
+                  onClick={() => {navigate("/login"); setOpen(false);}}
+                  className="w-full bg-[#00e676] text-black font-black py-4 rounded-2xl hover:bg-white transition-all shadow-lg uppercase tracking-widest text-sm"
+                >
+                  Login / Register
+                </button>
+              </div>
+            )}
+          </div>
 
-          <button
-            className="w-full border border-red-500 text-red-500 py-3 rounded font-bold hover:bg-red-500 hover:text-white transition-all duration-300"
-            onClick={() => {
-              localStorage.clear();
-              window.location.href = "/login";
-            }}
-          >
-            Logout
-          </button>
+          <div className="text-center text-[10px] text-gray-600 tracking-[0.2em] uppercase">
+            © TechZone 2026
+          </div>
         </div>
       </div>
     </>
+  );
+}
+
+// Sidebar Menu Link Component
+function MenuLink({ icon, label, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className="w-full flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl transition-all group"
+    >
+      <span className="text-gray-400 group-hover:text-[#00e676] transition-colors">{icon}</span>
+      <span className="font-bold tracking-tight text-gray-200">{label}</span>
+    </button>
   );
 }
 

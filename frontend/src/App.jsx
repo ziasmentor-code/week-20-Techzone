@@ -1,42 +1,34 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import Login from "./pages/login";
-import Register from "./pages/register";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/home";
 import Navbar from "./pages/navbar";
-
-/* 🔐 Protected Route */
-function PrivateRoute() {
-  const token = localStorage.getItem("token");
-  return token ? <Outlet /> : <Navigate to="/login" />;
-}
-
-/* 🧭 Navbar Wrapper */
-function NavbarLayout() {
-  return (
-    <>
-      <Navbar />
-      <Outlet />
-    </>
-  );
-}
+import Login from "./pages/login";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import PrivateRoute from "./pages/PrivateRoute";
 
 function App() {
   return (
     <Router>
       <Routes>
-
-        {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/login" />} />
+        {/* User Routes */}
+        <Route path="/" element={<><Navbar /><Home /></>} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes WITH Navbar */}
-        <Route element={<PrivateRoute />}>
-          <Route element={<NavbarLayout />}>
-            <Route path="/home" element={<Home />} />
-          </Route>
-        </Route>
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        
+        {/* Protected Admin Dashboard */}
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <PrivateRoute>
+              <AdminDashboard />
+            </PrivateRoute>
+          } 
+        />
 
+        {/* Catch-all: തെറ്റായ ലിങ്ക് വന്നാൽ മാത്രം ഹോമിലേക്ക് വിടുക */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

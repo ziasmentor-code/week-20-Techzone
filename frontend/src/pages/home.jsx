@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import {useNavigate} from "react-router-dom";
 import { 
   Smartphone,  Laptop, 
    Watch, Headphones,Star
@@ -169,6 +170,11 @@ const popularCategories=[
 function Home() {
   const [current, setCurrent] = useState(0);
   const [activeCat,setActiveCat]=useState(popularCategories[0]);
+  const navigate=useNavigate();
+
+  const goToProduct=()=>{
+    navigate("/product");
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -207,7 +213,7 @@ function Home() {
                 {heroSlides[current].oldPrice}
               </span>
             </div>
-            <button className="w-fit bg-[#00e676] hover:bg-white text-black font-black py-4 px-14 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,230,118,0.4)]">
+            <button onClick={goToProduct} className="w-fit bg-[#00e676] hover:bg-white text-black font-black py-4 px-14 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,230,118,0.4)]">
               SHOP NOW
             </button>
           </div>
@@ -271,7 +277,7 @@ function Home() {
              <div className="h-10 w-2 bg-[#00e676] rounded-full shadow-[0_0_15px_#00e676]"></div>
              <h2 className="text-white text-4xl font-black tracking-tight uppercase">Techzone Exclusives</h2>
           </div>
-          <button className="text-[#00e676] font-bold border-b-2 border-[#00e676]/30 hover:border-[#00e676] transition-all">VIEW ALL</button>
+          <button onClick={goToProduct} className="text-[#00e676] font-bold border-b-2 border-[#00e676]/30 hover:border-[#00e676] transition-all">VIEW ALL</button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -299,7 +305,7 @@ function Home() {
                   <span className="text-gray-500 line-through text-xs">{prod.oldPrice}</span>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-2xl font-black text-white">{prod.price}</span>
-                    <button className="bg-white/10 hover:bg-[#00e676] p-3 rounded-xl transition-all group/btn">
+                    <button onClick={goToProduct} className="bg-white/10 hover:bg-[#00e676] p-3 rounded-xl transition-all group/btn">
                       <Smartphone size={18} className="group-hover/btn:text-black" />
                     </button>
                   </div>
@@ -330,7 +336,7 @@ function Home() {
           <p className="text-gray-400 text-lg md:text-xl leading-relaxed max-w-xl">
             {item.desc}
           </p>
-          <button className="border-b-2 border-[#00e676] text-[#00e676] pb-1 font-bold hover:text-white hover:border-white transition-all">
+          <button onClick={goToProduct} className="border-b-2 border-[#00e676] text-[#00e676] pb-1 font-bold hover:text-white hover:border-white transition-all">
             LEARN MORE
           </button>
         </div>
@@ -380,7 +386,7 @@ function Home() {
         <p className="text-gray-200 text-lg md:text-2xl font-medium mb-10 max-w-2xl opacity-90">
           {featuredvideo.subtitle}
         </p>
-        <button className="bg-[#00e676] text-black font-black py-4 px-12 rounded-full hover:bg-white transition-all transform hover:scale-105 active:scale-95 shadow-2xl">
+        <button onClick={goToProduct} className="bg-[#00e676] text-black font-black py-4 px-12 rounded-full hover:bg-white transition-all transform hover:scale-105 active:scale-95 shadow-2xl">
           DISCOVER MORE
         </button>
       </div>
@@ -479,7 +485,7 @@ function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Gaming Card */}
+
           <div className="rounded-[2rem] overflow-hidden shadow-2xl group cursor-pointer relative h-72 border border-white/5">
              <img 
                src="https://media-ik.croma.com/prod/https://media.tatacroma.com/Croma%20Assets/Computers%20Peripherals/Laptop/Images/315367_0_L8SqpdqXa.png?updatedAt=1758638361381?tr=w-640" 
@@ -543,7 +549,7 @@ function Home() {
             <p className="text-gray-400 text-lg mb-8 max-w-sm leading-relaxed">
               Seamlessly connect all the Techzone products to one another for a smart and smooth experience.
             </p>
-            <button className="text-white border-b border-white w-fit pb-1 text-sm hover:text-[#00e676] hover:border-[#00e676] transition-all">
+            <button onClick={goToProduct} className="text-white border-b border-white w-fit pb-1 text-sm hover:text-[#00e676] hover:border-[#00e676] transition-all">
               Learn More
             </button>
           </div>
@@ -563,7 +569,7 @@ function Home() {
       <section className="w-full bg-black">
         <div className="flex justify-between items-center px-6 md:px-14 py-6">
           <h2 className="text-white text-2xl font-medium tracking-wider">Red Cable Club</h2>
-          <button className="text-gray-400 hover:text-[#00e676] text-sm flex items-center gap-1 transition-colors uppercase font-bold tracking-widest">
+          <button onClick={goToProduct} className="text-gray-400 hover:text-[#00e676] text-sm flex items-center gap-1 transition-colors uppercase font-bold tracking-widest">
             Join the Club <span className="text-lg">›</span>
           </button>
         </div>

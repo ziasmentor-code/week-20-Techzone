@@ -1,82 +1,67 @@
 import { useState } from "react";
 import API from "../api/axios";
+import { useNavigate } from "react-router-dom"; // useNavigate ഇമ്പോർട്ട് ചെയ്യുക
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // നാവിഗേഷൻ ഫംഗ്ഷൻ ഡിക്ലയർ ചെയ്യുക
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await API.post("/token/", {
-        username,
-        password,
-      });
+      const res = await API.post("/token/", { username, password });
 
+      localStorage.clear();
+      localStorage.setItem("token", res.data.access);
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
-      localStorage.setItem("token", res.data.access);
 
       alert("Login Successful ✅");
-      window.location.href = "/home";
+      window.location.replace("/"); 
+      
     } catch (err) {
       setError("Invalid username or password ❌");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4 font-sans">
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
+        <h2 className="text-3xl font-black text-center mb-8 tracking-tighter text-black">LOGIN</h2>
+        {error && <p className="bg-red-100 text-red-600 p-3 rounded-lg text-sm mb-4 text-center font-bold">{error}</p>}
         
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Login
-        </h2>
-
-        {error && (
-          <p className="bg-red-100 text-red-600 text-sm p-2 rounded mb-4 text-center">
-            {error}
-          </p>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5 text-black">
           <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="text" placeholder="Username"
+            value={username} onChange={(e) => setUsername(e.target.value)} required
+            className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           />
-
           <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="password" placeholder="Password"
+            value={password} onChange={(e) => setPassword(e.target.value)} required
+            className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           />
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Login
+          <button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg">
+            CONTINUE
           </button>
         </form>
 
-        <p className="text-sm text-center mt-4">
-          New user?
-          <span
-            className="text-blue-600 cursor-pointer ml-1 hover:underline"
-            onClick={() => (window.location.href = "/register")}
-          >
-            Register
-          </span>
-        </p>
+        {/* പുതിയ രജിസ്റ്റർ ഓപ്ഷൻ താഴെ ചേർക്കുന്നു */}
+        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          <p className="text-gray-600 font-medium">
+            Don't have an account? 
+            <button 
+              onClick={() => navigate("/register")} 
+              className="ml-2 text-blue-600 font-bold hover:underline"
+            >
+              Register here
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

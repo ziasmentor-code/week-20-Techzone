@@ -1,39 +1,26 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { CartProvider } from './context/CartContext.jsx';
-import { WishlistProvider } from './context/WishlistContext.jsx';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { CartProvider } from "./context/CartContext.jsx";
+import { WishlistProvider } from "./context/WishlistContext.jsx";
 
-// Pages imports (filenames small letters, component names capitalized)
-import Navbar from './pages/navbar.jsx';
-import Products from './pages/products.jsx';
-import ProductDetail from './pages/productdetail.jsx';
-import Cart from './pages/cart.jsx';
-import Wishlist from './pages/wishlist.jsx';
-import Login from './pages/login.jsx';
+import Navbar from "./pages/Navbar.jsx";
+import Home from "./pages/home.jsx";
+import Products from "./pages/product.jsx";
+import ProductDetail from "./pages/ProductDetail.jsx";
+import Cart from "./pages/Cart.jsx";
+import Wishlist from "./pages/Wishlist.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/register.jsx";
+import OrderSuccess from './pages/OrderSuccess';
+import Order from "./pages/Order.jsx"; 
+import Checkout from "./pages/Checkout.jsx";
+import AdminDashboard from './pages/AdminDashboard';
 
-// 404 Component
 function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center max-w-md">
-        <h1 className="text-8xl font-black text-gray-200 mb-4">404</h1>
-        <h2 className="text-3xl font-bold mb-4">Page Not Found</h2>
-        <p className="text-gray-500 mb-8">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <Link
-          to="/products"
-          className="inline-block bg-black text-white px-8 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors"
-        >
-          Go to Products
-        </Link>
-      </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <h1 className="text-3xl font-bold text-gray-800">404 - Page Not Found</h1>
     </div>
   );
-}
-
-// Home redirect
-function Home() {
-  return <Navigate to="/products" replace />;
 }
 
 function App() {
@@ -41,18 +28,30 @@ function App() {
     <Router>
       <CartProvider>
         <WishlistProvider>
-          <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/product/:productId" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            
+            {/* ✅ രണ്ട് പാത്തുകളും (product & products) ഇവിടെ നൽകുന്നു */}
+            <Route path="/product" element={<Products />} />
+            <Route path="/products" element={<Products />} />
+            
+            <Route path="/product/:productId" element={<ProductDetail />} />
+
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/checkout" element={<Checkout />}/>
+            <Route path="/order-success" element={<OrderSuccess />} />
+            
+            <Route path="/my-orders" element={<Order />} /> 
+            <Route path="/admin" element={<AdminDashboard />} />
+
+            {/* ❌ NotFound എപ്പോഴും അവസാനം മാത്രം */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </WishlistProvider>
       </CartProvider>
     </Router>

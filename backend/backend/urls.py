@@ -8,14 +8,18 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
+
+    # JWT login
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('admin/', admin.site.urls),
+
+    # App URLs
     path('api/products/', include('products.urls')),
     path('api/cart/', include('cart.urls')),
-    path('api/order/', include('orders.urls')), 
-    path('api/wishlist/', include('wishlist.urls')), 
-     path("api/users/", include("users.urls")),
+    path('api/orders/', include('orders.urls')),
+    path('api/wishlist/', include('wishlist.urls')),
+    path('api/users/', include('users.urls')),
 ]
 
 if settings.DEBUG:

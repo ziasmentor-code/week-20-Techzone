@@ -46,13 +46,13 @@ const AdminDashboard = () => {
       <style>{`
         .nav-btn {
           display: flex; align-items: center; gap: 1rem; width: 100%; padding: 0.75rem 1rem;
-          border-radius: 0.75rem; color: #94a3b8; transition: all 0.3s;
+          border-radius: 0.75rem; color: #94a3b8; transition: all 0.3s; border: none; background: transparent; cursor: pointer;
         }
         .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-btn.active { background: #00e676; color: black; font-weight: bold; box-shadow: 0 0 15px rgba(0,230,118,0.2); }
         .logout-btn {
           display: flex; align-items: center; gap: 1rem; width: 100%; padding: 0.75rem 1rem;
-          border-radius: 0.75rem; color: #f87171; transition: all 0.3s; font-weight: bold;
+          border-radius: 0.75rem; color: #f87171; transition: all 0.3s; font-weight: bold; border: none; background: transparent; cursor: pointer;
         }
         .logout-btn:hover { background: rgba(239,68,68,0.1); }
       `}</style>
@@ -66,7 +66,10 @@ const DashboardView = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await API.get("/products/");
+        const token = localStorage.getItem('token');
+        const res = await API.get("/products/", {
+          headers: { Authorization: `Token ${token}` }
+        });
         setStats({
           products: res.data.length,
           revenue: 0 
@@ -110,9 +113,13 @@ const ProductsView = () => {
 
   const loadData = async () => {
     try {
-      const prodRes = await API.get("/products/");
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Token ${token}` } };
+      
+      const prodRes = await API.get("/products/", config);
       setAllProducts(prodRes.data);
-      const catRes = await API.get("/products/categories/"); 
+      
+      const catRes = await API.get("/products/categories/", config); 
       setCategories(catRes.data);
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -123,23 +130,23 @@ const ProductsView = () => {
     loadData();
   }, []);
 
-  // അപ്‌ഡേറ്റ് ചെയ്ത handleAddProduct ഫംഗ്‌ഷൻ
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!selectedCategory) return alert("Please select a category!");
 
+    const token = localStorage.getItem('token');
     const formData = new FormData();
     formData.append("name", name);
     formData.append("description", description);
     formData.append("price", price);
-    formData.append("category_id", selectedCategory);
+    formData.append("category", selectedCategory); // 'category' എന്നത് ID ആണെന്ന് ഉറപ്പാക്കുക
     if (image) formData.append("image", image);
 
     try {
-      // 415 error ഒഴിവാക്കാൻ headers ചേർത്തു
       await API.post("/products/", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Token ${token}`
         }
       });
       alert("Product Added! ✅");
@@ -154,7 +161,10 @@ const ProductsView = () => {
   const deleteProduct = async (id) => {
     if (window.confirm("Delete this product?")) {
       try {
-        await API.delete(`/products/${id}/`);
+        const token = localStorage.getItem('token');
+        await API.delete(`/products/${id}/`, {
+          headers: { Authorization: `Token ${token}` }
+        });
         loadData();
       } catch (err) {
         alert("Delete failed!");
@@ -197,16 +207,10 @@ const ProductsView = () => {
               {allProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-white/5 transition-colors">
                   <td className="p-5 flex items-center gap-4">
-                    <div className="w-32 h-32 flex-shrink-0 overflow-hidden rounded-xl bg-black/40">
+                    <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-xl bg-black/40">
                       <img 
-                        src={
-                          product?.image
-                            ? product.image.startsWith('http')
-                              ? product.image
-                              : `http://127.0.0.1:8000${product.image}`
-                            : "https://placehold.co/300x300?text=No+Image"
-                        }
-                        alt={product?.name || "Product"}
+                        src={product.image ? (product.image.startsWith('http') ? product.image : `http://127.0.0.1:8000${product.image}`) : "https://placehold.co/150"}
+                        alt={product.name}
                         className="w-full h-full object-cover"
                       />
                     </div>

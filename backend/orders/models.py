@@ -15,6 +15,10 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_paid = models.BooleanField(default=False)
+    
+    # പുതിയ ഫീൽഡുകൾ
+    shipping_address = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
@@ -27,7 +31,3 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} (Order #{self.order.id})"
-
-    @property
-    def item_total(self):
-        return self.price * self.quantity

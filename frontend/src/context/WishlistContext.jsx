@@ -7,39 +7,48 @@ export function WishlistProvider({ children }) {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch wishlist from API
+  // ✅ Fetch wishlist from API
   const fetchWishlist = async () => {
+    const token = localStorage.getItem('token');
+    
+    // ടോക്കൺ ഇല്ലെങ്കിൽ എറർ ഒഴിവാക്കാൻ റിട്ടേൺ ചെയ്യുന്നു
+    if (!token) {
+      setWishlistItems([]);
+      return;
+    }
+
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await API.get('/wishlist/', {
-        headers: { Authorization: `Token ${token}` }
+        // 'Token' എന്നതിന് പകരം 'Bearer' ഉപയോഗിക്കുക (നിങ്ങൾ JWT ആണ് ഉപയോഗിക്കുന്നതെങ്കിൽ)
+        headers: { Authorization: `Bearer ${token}` }
       });
       
-      // API response structure അനുസരിച്ച് മാറ്റാം
       setWishlistItems(response.data);
     } catch (error) {
       console.error('Error fetching wishlist:', error);
+      if (error.response?.status === 401) {
+        // ടോക്കൺ ഇൻവാലിഡ് ആണെങ്കിൽ ക്ലിയർ ചെയ്യാം
+        // localStorage.removeItem('token'); 
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Add to wishlist
+  // ✅ Add to wishlist
   const addToWishlist = async (product) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        window.location.href = '/login';
-        return;
+        alert("Please login to add items to wishlist");
+        return false;
       }
 
       await API.post('/wishlist/', { 
-        product: product.id 
+        product_id: product.id  // ബാക്കെൻഡ് പ്രതീക്ഷിക്കുന്ന കീ (Key) ശ്രദ്ധിക്കുക
       }, {
-        headers: { Authorization: `Token ${token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       setWishlistItems(prev => [...prev, product]);
@@ -50,13 +59,14 @@ export function WishlistProvider({ children }) {
     }
   };
 
-  // Remove from wishlist
+  // ✅ Remove from wishlist
   const removeFromWishlist = async (productId) => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) return false;
       
       await API.delete(`/wishlist/${productId}/`, {
-        headers: { Authorization: `Token ${token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       setWishlistItems(prev => prev.filter(item => item.id !== productId));
@@ -67,12 +77,10 @@ export function WishlistProvider({ children }) {
     }
   };
 
-  // Check if product is in wishlist
   const isInWishlist = (productId) => {
     return wishlistItems.some(item => item.id === productId);
   };
 
-  // Toggle wishlist
   const toggleWishlist = async (product) => {
     if (isInWishlist(product.id)) {
       return await removeFromWishlist(product.id);
@@ -81,6 +89,7 @@ export function WishlistProvider({ children }) {
     }
   };
 
+  // പേജ് ലോഡ് ചെയ്യുമ്പോൾ മാത്രം ഫെച്ച് ചെയ്യുന്നു
   useEffect(() => {
     fetchWishlist();
   }, []);

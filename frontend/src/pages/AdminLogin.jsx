@@ -1,39 +1,41 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // useNavigate ഇമ്പോർട്ട് ചെയ്യുക
 import API from "../api/axios";
 
 function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // navigate ഫംഗ്ഷൻ ഡിക്ലയർ ചെയ്യുക
 
- const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
 
-  try {
-    const res = await API.post("/token/", { username, password });
+    try {
+      const res = await API.post("/token/", { username, password });
 
-    // 1. Clear any old session data (User or previous Admin)
-    localStorage.clear();
+      // 1. പഴയ സെഷൻ ഡാറ്റ ക്ലിയർ ചെയ്യുന്നു
+      localStorage.clear();
 
-    // 2. Save new Admin data
-    localStorage.setItem("token", res.data.access);
-    localStorage.setItem("isAdmin", "true"); 
+      // 2. പുതിയ അഡ്മിൻ ഡാറ്റ സേവ് ചെയ്യുന്നു
+      localStorage.setItem("token", res.data.access);
+      localStorage.setItem("isAdmin", "true");
 
-    alert("Access Granted. Welcome, Admin! ✅");
+      alert("Access Granted. Welcome, Admin! ✅");
 
-    // 3. Force a redirect to the dashboard
-    window.location.assign("/admin/dashboard");
-    
-  } catch (err) {
-    // Check if the error is due to unauthorized access
-    if (err.response && err.response.status === 403) {
-      setError("Forbidden: You do not have Admin privileges! ❌");
-    } else {
-      setError("Invalid Admin ID or Passkey! ❌");
+      // 3. ഡാഷ്‌ബോർഡിലേക്ക് തിരിച്ചുവിടുന്നു
+      navigate("/admin");
+
+    } catch (err) {
+      // ബാക്കെൻഡുമായുള്ള കണക്ഷൻ പരാജയപ്പെട്ടാൽ അല്ലെങ്കിൽ വിവരങ്ങൾ തെറ്റാണെങ്കിൽ എറർ കാണിക്കുന്നു
+      if (err.response && err.response.status === 403) {
+        setError("Forbidden: You do not have Admin privileges! ❌");
+      } else {
+        setError("Invalid Admin ID or Passkey! ❌");
+      }
     }
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black p-4">

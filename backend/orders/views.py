@@ -1,68 +1,104 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView
+from cart.models import Cart, CartItem
 from .models import Order, OrderItem
-from products.models import Product
+from .serializers import OrderSerializer
+from django.db.models import Sum
 
-# ✅ 1. എല്ലാ ഓർഡറുകളും ലിസ്റ്റ് ചെയ്യാൻ (യൂസറിന് മാത്രം)
-class OrderListView(APIView):
+# 1. എല്ലാ ഓർഡറുകളും കാണാൻ
+class OrderListView(ListAPIView):
+    serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        orders = Order.objects.filter(user=request.user).order_by('-created_at')
-        # ഇവിടെ സിംപിൾ ആയി ഡാറ്റ അയക്കുന്നു, നിങ്ങൾക്ക് വേണമെങ്കിൽ സീരിയലൈസർ ഉപയോഗിക്കാം
-        data = []
-        for order in orders:
-            data.append({
-                "id": order.id,
-                "total_price": order.total_price,
-                "status": order.status,
-                "created_at": order.created_at,
-                "shipping_address": order.shipping_address,
-                "phone": order.phone
-            })
-        return Response(data)
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Order.objects.all().order_by('-created_at')
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
 
-# ✅ 2. ഒരു സിംഗിൾ ഓർഡറിന്റെ ഡീറ്റെയിൽസ് കാണാൻ
-class OrderDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+# 2. ഓർഡർ അപ്‌ഡേറ്റ് ചെയ്യാൻ (ഇതാണ് പ്രധാനം)
+class OrderDetailView(RetrieveUpdateAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated] # അടിസ്ഥാനപരമായി ലോഗിൻ ചെയ്തവർക്ക്
 
-    def get(self, request, pk):
-        try:
-            order = Order.objects.get(pk=pk, user=request.user)
-            return Response({"id": order.id, "total_price": order.total_price}) # കൂടുതൽ വിവരങ്ങൾ ചേർക്കാം
-        except Order.DoesNotExist:
-            return Response({'detail': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+    def get_queryset(self):
+        return Order.objects.all()
 
-# ✅ 3. പുതിയ ഓർഡർ പ്ലേസ് ചെയ്യാൻ
+    # അഡ്മിൻ പാനലിൽ നിന്നുള്ള PATCH റിക്വസ്റ്റ് ഇവിടെയാണ് കൈകാര്യം ചെയ്യുന്നത്
+    def patch(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response({"error": "Admin access required"}, status=status.HTTP_403_FORBIDDEN)
+        
+        instance = self.get_object()
+        # സ്റ്റാറ്റസ് മാത്രം മാറ്റാൻ partial=True ഉപയോഗിക്കുന്നു
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 3. പുതിയ ഓർഡർ നൽകാൻ 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def place_order(request):
-    data = request.data
-    order_items = data.get('orderItems')
+    user = request.user
+    try:
+        cart, created = Cart.objects.get_or_create(user=user)
+        cart_items = cart.items.all() 
 
-    if not order_items or len(order_items) == 0:
-        return Response({'detail': 'No items in order'}, status=status.HTTP_400_BAD_REQUEST)
+        if not cart_items.exists():
+            return Response(
+                {"error": "Cart is empty"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-    # ഓർഡർ ക്രിയേറ്റ് ചെയ്യുന്നു
-    order = Order.objects.create(
-        user=request.user,
-        total_price=data.get('totalPrice'),
-        shipping_address=data.get('shippingAddress'),
-        phone=data.get('phone'),
-        status='pending'
-    )
+        address = request.data.get('shippingAddress', 'No Address Provided')
+        phone_no = request.data.get('phone', 'No Phone Provided')
 
-    # ഐറ്റങ്ങൾ ക്രിയേറ്റ് ചെയ്യുന്നു
-    for item in order_items:
-        product = Product.objects.get(id=item['id'])
-        OrderItem.objects.create(
-            product=product,
-            order=order,
-            quantity=item['quantity'],
-            price=item['price']
+        order = Order.objects.create(
+            user=user,
+            status="pending",
+            total_price=0
         )
 
-    return Response({'detail': 'Order successful', 'order_id': order.id}, status=status.HTTP_201_CREATED)
+        total = 0
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
+            total += item.product.price * item.quantity
+
+        order.total_price = total
+        order.save()
+
+        cart_items.delete()
+
+        return Response({
+            "message": "Order placed successfully", 
+            "order_id": order.id
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# 4. അഡ്മിൻ ഡാഷ്‌ബോർഡിന് വേണ്ടിയുള്ള സ്റ്റാറ്റിസ്റ്റിക്സ്
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_dashboard_stats(request):
+    if not request.user.is_staff:
+        return Response({"error": "Unauthorized"}, status=403)
+    
+    # Delivered ആയ ഓർഡറുകളുടെ മാത്രം തുക കണക്കാക്കുന്നു
+    total_revenue = Order.objects.filter(status='delivered').aggregate(Sum('total_price'))['total_price__sum'] or 0
+    total_orders = Order.objects.count()
+    
+    return Response({
+        "revenue": total_revenue,
+        "orders_count": total_orders
+    })

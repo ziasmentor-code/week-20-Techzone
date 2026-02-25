@@ -5,11 +5,14 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((req) => {
-  const token = localStorage.getItem("token");
+  // നിങ്ങളുടെ Login കമ്പോണന്റിൽ 'token' എന്ന പേരിൽ തന്നെയാണോ സേവ് ചെയ്യുന്നത് എന്ന് നോക്കുക
+  const token = localStorage.getItem("token"); 
   if (token) {
     req.headers.Authorization = `Bearer ${token}`;
   }
   return req;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export default API;

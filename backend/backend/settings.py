@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 from datetime import timedelta
 CORS_ALLOW_ALL_ORIGINS = True
@@ -135,19 +135,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-REST_FRAMEWORK={
-    'DEFAULT_AUTHENTICATION_CLASSES':(
-       
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-       
     ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        
-        'rest_framework.permissions.AllowAny',
-    ]
-
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
 }
-
 SIMPLE_JWT={
     'ACCESS_TOKEN_LIFETIME':timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME':timedelta(days=1),
@@ -158,7 +154,7 @@ SESSION_COOKIE_SECURE = False
 
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ALLOW_HEADERS = [
     "accept",

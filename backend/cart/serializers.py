@@ -1,10 +1,17 @@
 from rest_framework import serializers
-from .models import CartItem
+from .models import Cart, CartItem
 
 class CartItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
 
-    total_price = serializers.ReadOnlyField() 
+    class Model:
+        model = CartItem
+        fields = ['id', 'product', 'product_name', 'price', 'quantity']
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
 
     class Meta:
-        model = CartItem
-        fields = ['id', 'cart', 'product', 'quantity', 'total_price']
+        model = Cart
+        fields = ['id', 'items']

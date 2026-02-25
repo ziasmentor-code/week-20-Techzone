@@ -15,8 +15,8 @@ except admin.sites.NotRegistered:
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'total_price', 'status', 'is_paid', 'created_at']
-    list_filter = ['status', 'is_paid']
+    list_display = ['id', 'user', 'total_price', 'status', 'created_at']
+    list_filter = ['status']
     inlines = [OrderItemInline]
 
 # --- PRODUCT SECTION ---

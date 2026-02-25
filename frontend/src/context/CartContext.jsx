@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import API from '../api/axios'; // നിങ്ങളുടെ axios ഇൻസ്റ്റൻസ് ഇമ്പോർട്ട് ചെയ്യുക
 
-// 1. Context നിർമ്മിക്കുന്നു
 const CartContext = createContext();
 
-// 2. useCart ഹുക്ക് എക്സ്പോർട്ട് ചെയ്യുന്നു (ഇവിടെ export ഉണ്ടെന്ന് ഉറപ്പാക്കുക)
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
@@ -12,55 +11,81 @@ export const useCart = () => {
   return context;
 };
 
-// 3. Provider കമ്പോണന്റ്
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
-  // ലോക്കൽ സ്റ്റോറേജിൽ നിന്ന് ഡാറ്റ ലോഡ് ചെയ്യുന്നു
+  // 1. ആപ്പ് ലോഡ് ചെയ്യുമ്പോൾ ബാക്കെൻഡിൽ നിന്ന് കാർട്ട് ഡാറ്റ എടുക്കുന്നു
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
+    const fetchCart = async () => {
       try {
-        setCart(JSON.parse(savedCart));
+        const response = await API.get('cart/'); // ബാക്കെൻഡിൽ കാർട്ട് കാണാനുള്ള URL
+        setCart(response.data.items || []);
       } catch (error) {
-        console.error("Cart parse error:", error);
+        console.error("Cart fetch error:", error);
+        // ബാക്കെൻഡിൽ നിന്ന് കിട്ടിയില്ലെങ്കിൽ ലോക്കൽ സ്റ്റോറേജ് ഉപയോഗിക്കാം
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) setCart(JSON.parse(savedCart));
       }
-    }
+    };
+    fetchCart();
   }, []);
 
-  // കാർട്ടിൽ മാറ്റം വരുമ്പോൾ ലോക്കൽ സ്റ്റോറേജിലേക്ക് സേവ് ചെയ്യുന്നു
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+  // 2. ബാക്കെൻഡിലേക്ക് പ്രൊഡക്റ്റ് ആഡ് ചെയ്യുന്നു
+  const addToCart = async (product) => {
+    try {
+      // ബാക്കെൻഡ് എപിഐ കോൾ
+      await API.post('cart/add/', {
+        product_id: product.id,
+        quantity: 1
+      });
 
-  const addToCart = (product) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item
-        );
-      }
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
+      // ഫ്രണ്ട് എൻഡ് സ്റ്റേറ്റ് അപ്‌ഡേറ്റ് ചെയ്യുന്നു
+      setCart((prevCart) => {
+        const existingItem = prevCart.find((item) => item.id === product.id);
+        const updatedCart = existingItem
+          ? prevCart.map((item) =>
+              item.id === product.id ? { ...item, quantity: (item.quantity || 0) + 1 } : item
+            )
+          : [...prevCart, { ...product, quantity: 1 }];
+        
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        return updatedCart;
+      });
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      alert("Could not sync with server. Please login again.");
+    }
   };
 
-  const updateQuantity = (productId, newQuantity) => {
+  // 3. ക്വാണ്ടിറ്റി അപ്‌ഡേറ്റ് ചെയ്യുന്നു
+  const updateQuantity = async (productId, newQuantity) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
     }
-    setCart((prevCart) =>
-      prevCart.map((item) => (item.id === productId ? { ...item, quantity: newQuantity } : item))
-    );
+    try {
+      await API.post('cart/update/', { product_id: productId, quantity: newQuantity });
+      setCart((prevCart) =>
+        prevCart.map((item) => (item.id === productId ? { ...item, quantity: newQuantity } : item))
+      );
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
   };
 
-  const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+  // 4. കാർട്ടിൽ നിന്ന് ഒഴിവാക്കുന്നു
+  const removeFromCart = async (productId) => {
+    try {
+      await API.delete(`cart/remove/${productId}/`);
+      setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    } catch (error) {
+      console.error("Remove failed:", error);
+    }
   };
 
   const clearCart = () => {
     setCart([]);
+    localStorage.removeItem('cart');
   };
 
   const cartTotal = cart.reduce((total, item) => total + (item.price || 0) * (item.quantity || 1), 0);

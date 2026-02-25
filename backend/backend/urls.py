@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from backend import views  # Import the admin_stats view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -20,10 +21,11 @@ urlpatterns = [
     path('api/orders/', include('orders.urls')),
     path('api/wishlist/', include('wishlist.urls')),
     path('api/users/', include('users.urls')),
+
+    # ✅ New Admin Stats API
+    path('api/admin-stats/', views.admin_stats, name='admin-stats'),
 ]
 
+# Serve media files in debug mode
 if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT
-    )
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

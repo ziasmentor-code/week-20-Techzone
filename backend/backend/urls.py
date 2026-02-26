@@ -1,31 +1,26 @@
+from django.contrib import admin
+from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import path, include
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-from backend import views  # Import the admin_stats view
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # JWT login
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # ===== PRODUCT CRUD =====
+    path('api/admin-products/', views.admin_products, name='admin-products'),
+    path('api/add-product/', views.add_product, name='add-product'),
+    path('api/update-product/<int:pk>/', views.update_product, name='update-product'),
+    path('api/delete-product/<int:pk>/', views.delete_product, name='delete-product'),
 
-    # App URLs
-    path('api/products/', include('products.urls')),
-    path('api/cart/', include('cart.urls')),
-    path('api/orders/', include('orders.urls')),
-    path('api/wishlist/', include('wishlist.urls')),
-    path('api/users/', include('users.urls')),
-
-    # ✅ New Admin Stats API
+    # ===== DASHBOARD =====
     path('api/admin-stats/', views.admin_stats, name='admin-stats'),
+
+    # ===== CART & WISHLIST =====
+    path('api/cart/', views.cart_view, name='cart'),
+    path('api/wishlist/', views.wishlist_view, name='wishlist'),
 ]
 
-# Serve media files in debug mode
+# Media files support
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

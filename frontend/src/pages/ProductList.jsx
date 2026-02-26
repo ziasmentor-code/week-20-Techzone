@@ -1,78 +1,36 @@
-import { useEffect,useState } from "react";
-import API from "../api/axios";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-function AdminProductList(){
-    const [products,setProducts]=useState([]);
-    const navigate = useNavigate();
+function ProductList() {
+    const [products, setProducts] = useState([]);
+    const BASE_URL = "http://127.0.0.1:8000";
 
-    const fetchProducts=async()=>{
-        try{
-            const res=await API.get("products/");
-            setProducts(res.data);
-        }catch(error){
-            toast.error("Failed to load products");
-        }
-    };
+    useEffect(() => {
+        const getProducts = async () => {
+            try {
+                // Must use the correct endpoint from your Django backend
+                const res = await axios.get(`${BASE_URL}/api/admin-products/`);
+                setProducts(res.data);
+            } catch (err) {
+                console.log(err);
+            }
+        };
+        getProducts();
+    }, []);
 
-    const deleteProduct=async(id)=>{
-        if(!window.confirm("Are you sure?"))return;
-
-        try{
-            await API.delete(`products/${id}/`);
-            toast.success("Product deleted");
-            fetchProducts();
-
-        }catch(error){
-            toast.error("Delete failed");
-
-        }
-    };
-    useEffect(()=>{
-        fetchProducts();
-    },[]);
-
-    return(
-        <div>
-            <h2>Admin-Product List</h2>
-            {products.length===0? (
-                <p>No Products found</p>
-
-            ):(
-                <table border="1" cellpadding="10">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Image</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-
-
-            <tbody>
-                {products.map((p)=>(
-                    <tr key={p.id}>
-                        <td>{p.name}</td>
-                        <td>{p.price}</td>
-                         <td>
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    width="80"
-                  />
-                </td>
-                <td>
-                    <button onClick={()=>deleteProduct(p.id)}>Delete</button>\
-                    <button onClick={()=>Navigate(`/admin/products/edit/${p.id}`)} style={{marginLeft:"5px"}}>Edit</button>
-                </td>
-                    </tr>
+    return (
+        <div style={{ padding: "100px 20px", backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+                {products.map((p) => (
+                    <div key={p.id} style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "8px", background: "white" }}>
+                        <img src={p.image ? (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`) : ""} alt={p.name} style={{ width: "100%", height: "200px", objectFit: "contain" }} />
+                        <h3>{p.name}</h3>
+                        <p style={{ color: "green", fontWeight: "bold" }}>₹{p.price}</p>
+                    </div>
                 ))}
-            </tbody>
-                </table>
-            )}
+            </div>
         </div>
     );
 }
-export default AdminProductList;
+
+export default ProductList;

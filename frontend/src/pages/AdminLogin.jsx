@@ -1,68 +1,99 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // useNavigate ഇമ്പോർട്ട് ചെയ്യുക
-import API from "../api/axios";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import API from '../api/axios';
 
 function AdminLogin() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate(); // navigate ഫംഗ്ഷൻ ഡിക്ലയർ ചെയ്യുക
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
+    setError('');
 
     try {
-      const res = await API.post("/token/", { username, password });
-
-      // 1. പഴയ സെഷൻ ഡാറ്റ ക്ലിയർ ചെയ്യുന്നു
-      localStorage.clear();
-
-      // 2. പുതിയ അഡ്മിൻ ഡാറ്റ സേവ് ചെയ്യുന്നു
-      localStorage.setItem("token", res.data.access);
-      localStorage.setItem("isAdmin", "true");
-
-      alert("Access Granted. Welcome, Admin! ✅");
-
-      // 3. ഡാഷ്‌ബോർഡിലേക്ക് തിരിച്ചുവിടുന്നു
-      navigate("/admin");
-
-    } catch (err) {
-      // ബാക്കെൻഡുമായുള്ള കണക്ഷൻ പരാജയപ്പെട്ടാൽ അല്ലെങ്കിൽ വിവരങ്ങൾ തെറ്റാണെങ്കിൽ എറർ കാണിക്കുന്നു
-      if (err.response && err.response.status === 403) {
-        setError("Forbidden: You do not have Admin privileges! ❌");
-      } else {
-        setError("Invalid Admin ID or Passkey! ❌");
+      // 1. JWT token ലഭിക്കാനായി 'token/' എൻഡ്‌പോയിന്റിലേക്ക് അയക്കുന്നു
+      // baseURL-ൽ /api/ ഉള്ളതുകൊണ്ട് ഇവിടെ 'token/' എന്ന് മാത്രം മതി
+      const response = await API.post('token/', credentials);
+      
+      // 2. JWT സാധാരണയായി access, refresh ടോക്കണുകളാണ് നൽകുന്നത്
+      if (response.data.access) {
+        localStorage.setItem('token', response.data.access);
+        localStorage.setItem('refresh_token', response.data.refresh);
+        
+        // യൂസർ അഡ്മിൻ ആണോ എന്ന് പരിശോധിക്കാൻ ലളിതമായ ഒരു ഒബ്ജക്റ്റ് സേവ് ചെയ്യുന്നു
+        const userObj = { 
+          username: credentials.username, 
+          is_admin: true // ലോഗിൻ വിജയിച്ചാൽ അഡ്മിൻ ആയി കണക്കാക്കാം
+        };
+        localStorage.setItem('user', JSON.stringify(userObj));
+        
+        // വിജയകരമായി ലോഗിൻ ചെയ്താൽ അഡ്മിൻ ഡാഷ്‌ബോർഡിലേക്ക്
+        navigate('/admin');
       }
+      
+    } catch (error) {
+      console.error('Login Error:', error);
+      if (error.response?.status === 401) {
+        setError('Invalid username or password');
+      } else if (error.response?.status === 404) {
+        setError('Login API not found. Please check backend URLs.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4">
-      <div className="w-full max-w-md bg-[#111] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
-        <h2 className="text-3xl font-black text-center mb-8 text-[#00e676] tracking-tighter uppercase italic">
-          Admin Access Only
-        </h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">TECHRONE Admin</h2>
+        <p className="text-center text-gray-500 mb-6 font-medium">Admin Portal Login</p>
         
         {error && (
-          <p className="bg-red-500/10 text-red-500 p-4 rounded-xl text-sm mb-6 text-center font-bold border border-red-500/20">
+          <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded mb-4 text-sm text-center">
             {error}
-          </p>
+          </div>
         )}
         
-        <form onSubmit={handleLogin} className="space-y-5 text-white">
-          <input
-            type="text" placeholder="Admin ID"
-            value={username} onChange={(e) => setUsername(e.target.value)} required
-            className="w-full bg-white/5 px-6 py-4 border border-white/10 rounded-2xl focus:border-[#00e676] outline-none transition-all"
-          />
-          <input
-            type="password" placeholder="Passkey"
-            value={password} onChange={(e) => setPassword(e.target.value)} required
-            className="w-full bg-white/5 px-6 py-4 border border-white/10 rounded-2xl focus:border-[#00e676] outline-none transition-all"
-          />
-          <button type="submit" className="w-full bg-[#00e676] text-black py-4 rounded-2xl font-black hover:bg-white transition-all shadow-[0_0_20px_rgba(0,230,118,0.3)]">
-            LOGIN AS ADMIN
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">Username</label>
+            <input
+              type="text"
+              value={credentials.username}
+              onChange={(e) => setCredentials({...credentials, username: e.target.value})}
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Admin username"
+              required
+            />
+          </div>
+          
+          <div className="mb-6">
+            <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
+            <input
+              type="password"
+              value={credentials.password}
+              onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Admin password"
+              required
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 rounded-md font-bold hover:bg-blue-700 transition duration-200 disabled:bg-blue-300"
+          >
+            {loading ? 'Authenticating...' : 'Login to Dashboard'}
           </button>
         </form>
       </div>

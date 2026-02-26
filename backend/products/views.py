@@ -4,7 +4,8 @@ from .models import Product, Category
 from .serializers import ProductSerializer, CategorySerializer
 
 
-# Category Views
+# ================= CATEGORY =================
+
 class CategoryListCreateView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -17,16 +18,29 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAdminUser]
 
 
-# Product Views (🔥 FIX HERE 🔥)
+# ================= PRODUCT =================
+
 class ProductListCreateView(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
-    parser_classes = [MultiPartParser, FormParser]  # ✅ THIS LINE
+    parser_classes = [MultiPartParser, FormParser]
+
+    # 🔥 ADD THIS
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
 
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
-    parser_classes = [MultiPartParser, FormParser]  # ✅ ALSO HERE
+    parser_classes = [MultiPartParser, FormParser]
+
+    # 🔥 ADD THIS
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context

@@ -15,6 +15,8 @@ from datetime import timedelta
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5174",
 ]
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,6 +144,10 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny', 
     ),
 }
 SIMPLE_JWT={

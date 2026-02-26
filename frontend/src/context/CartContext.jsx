@@ -31,32 +31,38 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   // 2. ബാക്കെൻഡിലേക്ക് പ്രൊഡക്റ്റ് ആഡ് ചെയ്യുന്നു
-  const addToCart = async (product) => {
-    try {
-      // ബാക്കെൻഡ് എപിഐ കോൾ
-      await API.post('cart/add/', {
-        product_id: product.id,
-        quantity: 1
-      });
+// Update the addToCart function in your CartContext.jsx
+const addToCart = async (product) => {
+  try {
+    const token = localStorage.getItem('token');
 
-      // ഫ്രണ്ട് എൻഡ് സ്റ്റേറ്റ് അപ്‌ഡേറ്റ് ചെയ്യുന്നു
-      setCart((prevCart) => {
-        const existingItem = prevCart.find((item) => item.id === product.id);
-        const updatedCart = existingItem
-          ? prevCart.map((item) =>
-              item.id === product.id ? { ...item, quantity: (item.quantity || 0) + 1 } : item
-            )
-          : [...prevCart, { ...product, quantity: 1 }];
-        
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
-        return updatedCart;
-      });
-    } catch (error) {
-      console.error("Add to cart failed:", error);
-      alert("Could not sync with server. Please login again.");
+    // ⚠️ IMPORTANT: Verify if your backend URL is 'cart/add/' or just 'cart/'
+    // Django is sensitive to the trailing slash (the '/' at the end)
+    const response = await API.post('cart/add/', {
+      product_id: product.id,
+      quantity: 1
+    }, {
+      headers: { 
+        Authorization: `Bearer ${token}` 
+      }
+    });
+
+    // If the backend returns 200 (OK) or 201 (Created)
+    if (response.status === 200 || response.status === 201) {
+      setCart(prev => [...prev, response.data]);
+      return true;
     }
-  };
+  } catch (error) {
+    console.error("Add to cart failed:", error);
 
+    // If you see a 404 in the console, the URL path below is wrong
+    if (error.response && error.response.status === 404) {
+      alert("API Error: The URL 'cart/add/' was not found on the server. Please check your Django urls.py.");
+    } else {
+      alert("Something went wrong while adding the item to the cart.");
+    }
+  }
+};
   // 3. ക്വാണ്ടിറ്റി അപ്‌ഡേറ്റ് ചെയ്യുന്നു
   const updateQuantity = async (productId, newQuantity) => {
     if (newQuantity <= 0) {

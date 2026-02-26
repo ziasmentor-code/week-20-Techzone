@@ -1,11 +1,21 @@
-import React from 'react';
+// PrivateRoute.jsx
 import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-const PrivateRoute = ({ children }) => {
-  // നിങ്ങളുടെ ലോഗിൻ സിസ്റ്റം അനുസരിച്ച് ഇത് മാറ്റുക (ഉദാഹരണത്തിന് localStorage-ൽ ടോക്കൺ ഉണ്ടോ എന്ന് നോക്കാം)
-  const isAuthenticated = localStorage.getItem('token'); 
+function PrivateRoute({ children, adminOnly = false }) {
+  const { user, loading } = useAuth();
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
+  if (loading) return <div>Loading...</div>;
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (adminOnly && !user.is_admin) {
+    return <Navigate to="/" />;
+  }
+
+  return children;
+}
 
 export default PrivateRoute;

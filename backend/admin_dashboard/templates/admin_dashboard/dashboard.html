@@ -1,0 +1,60 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="text-gray-500 text-sm">Total Products</div>
+        <div class="text-3xl font-bold">{{ total_products }}</div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="text-gray-500 text-sm">Total Orders</div>
+        <div class="text-3xl font-bold">{{ total_orders }}</div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="text-gray-500 text-sm">Total Customers</div>
+        <div class="text-3xl font-bold">{{ total_customers }}</div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="text-gray-500 text-sm">Recent Orders</div>
+        <div class="text-3xl font-bold">{{ recent_orders|length }}</div>
+    </div>
+</div>
+
+<div class="bg-white p-6 rounded-lg shadow">
+    <h3 class="text-lg font-semibold mb-4">Recent Orders</h3>
+    <table class="w-full">
+        <thead>
+            <tr class="border-b">
+                <th class="text-left py-2">Order ID</th>
+                <th class="text-left py-2">Customer</th>
+                <th class="text-left py-2">Amount</th>
+                <th class="text-left py-2">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in recent_orders %}
+            <tr class="border-b">
+                <td class="py-2">#{{ order.id }}</td>
+                <td class="py-2">{{ order.user.username }}</td>
+                <td class="py-2">₹{{ order.total_amount }}</td>
+                <td class="py-2">
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                        {{ order.status }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="py-4 text-center text-gray-500">No orders yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

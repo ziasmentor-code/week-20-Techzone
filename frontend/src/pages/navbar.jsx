@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, ShoppingCart, Heart, Package, LogOut, Search, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useCart } from '../context/CartContext'; // Context import cheythu
+import { useCart } from '../context/CartContext';
 
 function Navbar() {
   const [open, setOpen] = useState(false);
@@ -11,8 +11,14 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 1. Cart Context-il ninnu count edukkuka
-  const { cartCount } = useCart();
+  // Safe cart count
+  let cartCount = 0;
+  try {
+    const cartContext = useCart();
+    cartCount = cartContext?.cartCount || 0;
+  } catch (error) {
+    console.log("Cart context not available yet");
+  }
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -36,18 +42,18 @@ function Navbar() {
 
   return (
     <>
-      {/* --- Main Navigation --- */}
+      {/* Main Navigation */}
       <nav className="fixed top-0 left-0 w-full bg-black text-white px-4 md:px-10 py-4 flex items-center justify-between z-50 shadow-2xl border-b border-white/10">
         
-        {/* Logo */}
+        {/* Logo - Home page link - Ensure this works */}
         <h1 
-          className="text-2xl font-black tracking-tighter cursor-pointer text-[#00e676]" 
+          className="text-2xl font-black tracking-tighter cursor-pointer text-[#00e676] hover:text-white transition-colors" 
           onClick={() => navigate("/")}
         >
           TECHZONE
         </h1>
 
-        {/* --- Search Bar --- */}
+        {/* Desktop Search Bar */}
         <form 
           onSubmit={handleSearch}
           className="hidden md:flex flex-1 max-w-md mx-8 relative group"
@@ -57,30 +63,45 @@ function Navbar() {
             placeholder="Search for products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 rounded-full py-2 px-12 outline-none focus:border-[#00e676] focus:ring-1 focus:ring-[#00e676] transition-all"
+            className="w-full bg-white/10 border border-white/20 rounded-full py-2 px-12 outline-none focus:border-[#00e676] focus:ring-1 focus:ring-[#00e676] transition-all text-white placeholder-gray-400"
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#00e676]" size={18} />
+          
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              <X size={16} />
+            </button>
+          )}
         </form>
 
-        {/* Icons */}
+        {/* Right Icons */}
         <div className="flex items-center gap-6">
-          <button className="md:hidden text-gray-400">
+          {/* Mobile Search Button */}
+          <button className="md:hidden text-gray-400 hover:text-[#00e676] transition">
             <Search size={22} />
           </button>
           
-          {/* 2. Cart Icon with dynamic count */}
-          <button onClick={() => navigate("/cart")} className="relative hover:text-[#00e676] transition">
+          {/* Cart Icon with count */}
+          <button 
+            onClick={() => navigate("/cart")} 
+            className="relative hover:text-[#00e676] transition group"
+          >
             <ShoppingCart size={24} />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-[#00e676] text-black text-[10px] font-bold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-black transition-all animate-in zoom-in">
+              <span className="absolute -top-2 -right-2 bg-[#00e676] text-black text-[10px] font-bold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-black animate-in zoom-in group-hover:scale-110 transition">
                 {cartCount}
               </span>
             )}
           </button>
 
+          {/* Account Button */}
           <button 
             onClick={() => setOpen(true)} 
-            className="flex items-center gap-2 border border-white/20 px-3 py-1.5 rounded-full hover:bg-white/10 transition"
+            className="flex items-center gap-2 border border-white/20 px-3 py-1.5 rounded-full hover:bg-white/10 hover:border-[#00e676] transition-all"
           >
             <User size={20} />
             <span className="hidden md:block text-xs font-bold uppercase tracking-widest">Account</span>
@@ -88,12 +109,18 @@ function Navbar() {
         </div>
       </nav>
 
+      {/* Spacer for fixed navbar */}
       <div className="h-20 bg-black"></div>
 
-      {/* --- Sidebar Overlay --- */}
-      {open && <div className="fixed inset-0 bg-black/80 z-[60] backdrop-blur-md" onClick={() => setOpen(false)} />}
+      {/* Sidebar Overlay */}
+      {open && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-[60] backdrop-blur-md" 
+          onClick={() => setOpen(false)} 
+        />
+      )}
 
-      {/* --- User Sidebar --- */}
+      {/* User Sidebar */}
       <div className={`fixed top-0 right-0 h-full w-85 bg-[#111] text-white z-[70] transform transition-transform duration-500 ease-in-out shadow-2xl ${open ? "translate-x-0" : "translate-x-full"}`}>
         <div className="p-8 flex flex-col h-full">
           
@@ -103,7 +130,10 @@ function Navbar() {
               <h2 className="text-2xl font-black tracking-tighter">MY ACCOUNT</h2>
               <div className="h-1 w-10 bg-[#00e676] mt-1"></div>
             </div>
-            <button onClick={() => setOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition">
+            <button 
+              onClick={() => setOpen(false)} 
+              className="p-2 hover:bg-white/10 rounded-full transition"
+            >
               <X size={24} />
             </button>
           </div>
@@ -112,9 +142,42 @@ function Navbar() {
           <div className="flex-1 space-y-2">
             {isLoggedIn ? (
               <>
-                <MenuLink icon={<User size={20}/>} label="My Profile" onClick={() => {navigate("/profile"); setOpen(false);}} />
-                <MenuLink icon={<Package size={20}/>} label="My Orders" onClick={() => {navigate("/orders"); setOpen(false);}} />
-                <MenuLink icon={<Heart size={20}/>} label="Wishlist" onClick={() => {navigate("/wishlist"); setOpen(false);}} />
+                <MenuLink 
+                  icon={<User size={20}/>} 
+                  label="My Profile" 
+                  onClick={() => {
+                    navigate("/profile"); 
+                    setOpen(false);
+                  }} 
+                />
+                
+                <MenuLink 
+                  icon={<Package size={20}/>} 
+                  label="My Orders" 
+                  onClick={() => {
+                    navigate("/orders"); 
+                    setOpen(false);
+                  }} 
+                />
+                
+                <MenuLink 
+                  icon={<Heart size={20}/>} 
+                  label="Wishlist" 
+                  onClick={() => {
+                    navigate("/wishlist"); 
+                    setOpen(false);
+                  }} 
+                />
+                
+                {/* Home link in sidebar */}
+                <MenuLink 
+                  icon={<span>🏠</span>} 
+                  label="Home" 
+                  onClick={() => {
+                    navigate("/"); 
+                    setOpen(false);
+                  }} 
+                />
                 
                 <div className="pt-8 mt-8 border-t border-white/10">
                   <button 
@@ -128,8 +191,23 @@ function Navbar() {
             ) : (
               <div className="text-center py-10">
                 <p className="text-gray-400 mb-6">Login to manage your orders and profile.</p>
+                
+                {/* Home link for non-logged users */}
                 <button 
-                  onClick={() => {navigate("/login"); setOpen(false);}}
+                  onClick={() => {
+                    navigate("/"); 
+                    setOpen(false);
+                  }}
+                  className="w-full bg-gray-800 text-white font-black py-4 rounded-2xl hover:bg-gray-700 transition-all mb-3 uppercase tracking-widest text-sm"
+                >
+                  Go to Home
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    navigate("/login"); 
+                    setOpen(false);
+                  }}
                   className="w-full bg-[#00e676] text-black font-black py-4 rounded-2xl hover:bg-white transition-all shadow-lg uppercase tracking-widest text-sm"
                 >
                   Login / Register
@@ -138,7 +216,8 @@ function Navbar() {
             )}
           </div>
 
-          <div className="text-center text-[10px] text-gray-600 tracking-[0.2em] uppercase">
+          {/* Footer */}
+          <div className="text-center text-[10px] text-gray-600 tracking-[0.2em] uppercase pt-6">
             © TechZone 2026
           </div>
         </div>
@@ -147,6 +226,7 @@ function Navbar() {
   );
 }
 
+// MenuLink Component
 function MenuLink({ icon, label, onClick }) {
   return (
     <button 
@@ -154,7 +234,7 @@ function MenuLink({ icon, label, onClick }) {
       className="w-full flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl transition-all group"
     >
       <span className="text-gray-400 group-hover:text-[#00e676] transition-colors">{icon}</span>
-      <span className="font-bold tracking-tight text-gray-200">{label}</span>
+      <span className="font-bold tracking-tight text-gray-200 group-hover:text-white">{label}</span>
     </button>
   );
 }

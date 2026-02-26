@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TECH ZONE Admin{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-indigo-900 text-white">
+            <div class="p-5 border-b border-indigo-800">
+                <h2 class="text-2xl font-bold">TECH ZONE</h2>
+                <p class="text-sm text-indigo-300">Admin Panel</p>
+            </div>
+            
+            <nav class="p-4">
+                <a href="{% url 'admin_dashboard' %}" class="block py-2.5 px-4 rounded hover:bg-indigo-800 mb-1 {% if request.path == '/admin-dashboard/' %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-dashboard w-6 inline-block"></i> Dashboard
+                </a>
+                <a href="{% url 'admin_products' %}" class="block py-2.5 px-4 rounded hover:bg-indigo-800 mb-1 {% if '/products' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-box w-6 inline-block"></i> Products
+                </a>
+                <a href="{% url 'admin_orders' %}" class="block py-2.5 px-4 rounded hover:bg-indigo-800 mb-1 {% if '/orders' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-shopping-cart w-6 inline-block"></i> Orders
+                </a>
+                <a href="{% url 'admin_categories' %}" class="block py-2.5 px-4 rounded hover:bg-indigo-800 mb-1 {% if '/categories' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-tags w-6 inline-block"></i> Categories
+                </a>
+                <a href="{% url 'admin_customers' %}" class="block py-2.5 px-4 rounded hover:bg-indigo-800 mb-1 {% if '/customers' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-users w-6 inline-block"></i> Customers
+                </a>
+                <a href="{% url 'admin_logout' %}" class="block py-2.5 px-4 rounded hover:bg-red-700 mt-10">
+                    <i class="fas fa-sign-out w-6 inline-block"></i> Logout
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Header -->
+            <div class="bg-white shadow p-4 flex justify-between items-center">
+                <h1 class="text-xl font-semibold">{% block header %}Dashboard{% endblock %}</h1>
+                <div class="text-sm text-gray-600">
+                    Welcome, {{ request.user.username }}
+                </div>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="p-4">
+                {% for message in messages %}
+                <div class="p-3 {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} rounded-lg mb-2">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Content -->
+            <div class="p-6">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

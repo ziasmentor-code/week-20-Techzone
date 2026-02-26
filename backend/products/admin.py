@@ -1,15 +1,9 @@
+# products/admin.py
 from django.contrib import admin
-from .models import Category,Product 
-
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display=("id","name","created_at")
-    search_fields=("name",)
+from .models import Product
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display=("id","name","category","price","created_at")
-    list_filter=("category",)
-    search_fields=("name",)
-
-
+    # Only include fields that actually exist in your models.py
+    list_display = ('name', 'price', 'stock') 
+    # Remove 'list_filter' if 'category' doesn't exist

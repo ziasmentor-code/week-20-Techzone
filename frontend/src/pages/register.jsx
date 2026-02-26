@@ -15,6 +15,7 @@ function Register() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -25,12 +26,20 @@ function Register() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setLoading(true);
 
+    // Frontend validation
     if (form.password !== form.password2) {
       setError("Passwords do not match!");
+      setLoading(false);
       return;
     }
 
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters long!");
+      setLoading(false);
+      return;
+    }
 
     const dataToSend = {
       username: form.username,
@@ -42,24 +51,57 @@ function Register() {
     };
 
     try {
-      const response = await API.post("/users/register/", dataToSend);
+      const response = await API.post("/register/", dataToSend);  // Changed to /register/
       console.log("SUCCESS ✅", response.data);
       setSuccess("Registration successful! Redirecting to login...");
       
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      const backendErrors = err.response?.data;
-      console.log("FULL ERROR DETAILS:", backendErrors);
-
-      if (backendErrors) {
-
-        const messages = Object.keys(backendErrors).map(key => {
-          return `${key}: ${backendErrors[key].join(", ")}`;
-        });
-        setError(messages.join(" | "));
+      console.log("ERROR RESPONSE:", err.response);
+      
+      // Handle different error formats
+      if (err.response?.data) {
+        const errorData = err.response.data;
+        let errorMessage = "";
+        
+        // Case 1: Django REST Framework error format
+        if (typeof errorData === 'object') {
+          // Handle field-specific errors
+          const fieldErrors = [];
+          for (const [field, messages] of Object.entries(errorData)) {
+            if (Array.isArray(messages)) {
+              // If messages is an array, join them
+              fieldErrors.push(`${field}: ${messages.join(', ')}`);
+            } else if (typeof messages === 'string') {
+              // If messages is a string
+              fieldErrors.push(`${field}: ${messages}`);
+            } else if (messages && typeof messages === 'object') {
+              // If messages is an object with message property
+              fieldErrors.push(`${field}: ${messages.message || JSON.stringify(messages)}`);
+            }
+          }
+          
+          if (fieldErrors.length > 0) {
+            errorMessage = fieldErrors.join(' | ');
+          } else {
+            errorMessage = JSON.stringify(errorData);
+          }
+        } else if (typeof errorData === 'string') {
+          // Case 2: String error message
+          errorMessage = errorData;
+        } else {
+          // Case 3: Unknown format
+          errorMessage = "Registration failed. Please check your details.";
+        }
+        
+        setError(errorMessage);
+      } else if (err.code === 'ERR_NETWORK') {
+        setError("Network error. Please check if backend server is running.");
       } else {
-        setError("Something went wrong. Please check your connection.");
+        setError("Something went wrong. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,6 +127,7 @@ function Register() {
               <input 
                 name="username" 
                 placeholder="Username" 
+                value={form.username}
                 onChange={handleChange} 
                 className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 px-12 text-white focus:border-[#00e676] focus:ring-1 focus:ring-[#00e676]/50 outline-none transition-all placeholder:text-gray-600"
                 required 
@@ -97,6 +140,7 @@ function Register() {
                 type="email"
                 name="email" 
                 placeholder="Email Address" 
+                value={form.email}
                 onChange={handleChange} 
                 className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 px-12 text-white focus:border-[#00e676] focus:ring-1 focus:ring-[#00e676]/50 outline-none transition-all placeholder:text-gray-600"
                 required 
@@ -107,12 +151,14 @@ function Register() {
               <input 
                 name="first_name" 
                 placeholder="First Name" 
+                value={form.first_name}
                 onChange={handleChange} 
                 className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 px-5 text-white focus:border-[#00e676] outline-none transition-all placeholder:text-gray-600"
               />
               <input 
                 name="last_name" 
                 placeholder="Last Name" 
+                value={form.last_name}
                 onChange={handleChange} 
                 className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 px-5 text-white focus:border-[#00e676] outline-none transition-all placeholder:text-gray-600"
               />
@@ -124,6 +170,7 @@ function Register() {
                 type="password" 
                 name="password" 
                 placeholder="Password" 
+                value={form.password}
                 onChange={handleChange} 
                 className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 px-12 text-white focus:border-[#00e676] focus:ring-1 focus:ring-[#00e676]/50 outline-none transition-all placeholder:text-gray-600"
                 required 
@@ -136,6 +183,7 @@ function Register() {
                 type="password" 
                 name="password2" 
                 placeholder="Confirm Password" 
+                value={form.password2}
                 onChange={handleChange} 
                 className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 px-12 text-white focus:border-[#00e676] focus:ring-1 focus:ring-[#00e676]/50 outline-none transition-all placeholder:text-gray-600"
                 required 
@@ -145,7 +193,7 @@ function Register() {
 
           {/* Feedback Messages */}
           {error && (
-            <div className="text-red-400 text-xs bg-red-400/10 p-4 rounded-xl border border-red-400/20 animate-in fade-in slide-in-from-top-1">
+            <div className="text-red-400 text-sm bg-red-400/10 p-4 rounded-xl border border-red-400/20 animate-in fade-in slide-in-from-top-1">
               <span className="font-bold">Error:</span> {error}
             </div>
           )}
@@ -157,9 +205,12 @@ function Register() {
 
           <button 
             type="submit" 
-            className="w-full bg-[#00e676] hover:bg-white text-black font-black py-5 rounded-2xl transition-all duration-500 transform active:scale-95 shadow-[0_10px_30px_rgba(0,230,118,0.2)] hover:shadow-[0_10px_40px_rgba(255,255,255,0.1)] mt-4 uppercase tracking-widest text-sm"
+            disabled={loading}
+            className={`w-full bg-[#00e676] hover:bg-white text-black font-black py-5 rounded-2xl transition-all duration-500 transform active:scale-95 shadow-[0_10px_30px_rgba(0,230,118,0.2)] hover:shadow-[0_10px_40px_rgba(255,255,255,0.1)] mt-4 uppercase tracking-widest text-sm ${
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            Register Now
+            {loading ? 'REGISTERING...' : 'REGISTER NOW'}
           </button>
         </form>
 

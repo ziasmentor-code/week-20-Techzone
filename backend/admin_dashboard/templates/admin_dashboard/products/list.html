@@ -1,0 +1,153 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Products - Admin{% endblock %}
+{% block header %}Products Management{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow">
+    <!-- Header -->
+    <div class="p-4 border-b flex justify-between items-center">
+        <div>
+            <h2 class="text-lg font-semibold">All Products</h2>
+            <p class="text-sm text-gray-500">{{ total }} products found</p>
+        </div>
+        <a href="{% url 'admin_product_add' %}" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+            <i class="fas fa-plus mr-2"></i>Add Product
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="p-4 border-b bg-gray-50">
+        <form method="get" class="flex flex-wrap gap-4">
+            <input type="text" name="search" placeholder="Search products..." 
+                   value="{{ request.GET.search }}"
+                   class="flex-1 min-w-[200px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            
+            <select name="category" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"i" %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit" class="bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-600">
+                <i class="fas fa-search mr-2"></i>Filter
+            </button>
+            
+            <a href="{% url 'admin_products' %}" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400">
+                <i class="fas fa-times mr-2"></i>Clear
+            </a>
+        </form>
+    </div>
+
+    <!-- Products Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IMAGE</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">NAME</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CATEGORY</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PRICE</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">STOCK</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CREATED</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for product in products %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">{{ product.id }}</td>
+                    
+                    <!-- IMAGE COLUMN -->
+                    <td class="px-6 py-4">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                             class="w-16 h-16 object-cover rounded-lg border">
+                        {% else %}
+                        <div class="w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400">
+                            <i class="fas fa-image text-2xl"></i>
+                        </div>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="px-6 py-4 font-medium">{{ product.name }}</td>
+                    
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                            {{ product.category.name }}
+                        </span>
+                    </td>
+                    
+                    <td class="px-6 py-4 font-bold">₹{{ product.price }}</td>
+                    
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if product.stock > 10 %}bg-green-100 text-green-800
+                            {% elif product.stock > 0 %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ product.stock }}
+                        </span>
+                    </td>
+                    
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        {{ product.created_at|date:"d M Y" }}
+                    </td>
+                    
+                    <td class="px-6 py-4">
+                        <div class="flex space-x-2">
+                            <a href="{% url 'admin_product_edit' product.id %}" class="text-blue-600 hover:text-blue-800 p-2">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'admin_product_delete' product.id %}" 
+                               class="text-red-600 hover:text-red-800 p-2"
+                               onclick="return confirm('Are you sure?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                        <i class="fas fa-box-open text-4xl mb-3"></i>
+                        <p>No products found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+    <div class="px-6 py-4 border-t flex justify-between items-center">
+        <p class="text-sm text-gray-500">
+            Showing {{ products.start_index }} to {{ products.end_index }} of {{ total }} products
+        </p>
+        <div class="flex space-x-2">
+            {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+               class="px-3 py-1 border rounded hover:bg-gray-50">
+                Previous
+            </a>
+            {% endif %}
+            
+            <span class="px-3 py-1 bg-indigo-500 text-white rounded">
+                {{ products.number }}
+            </span>
+            
+            {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+               class="px-3 py-1 border rounded hover:bg-gray-50">
+                Next
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

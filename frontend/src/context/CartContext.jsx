@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import API from '../api/axios'; // നിങ്ങളുടെ axios ഇൻസ്റ്റൻസ് ഇമ്പോർട്ട് ചെയ്യുക
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import API from '../api/axios';
 
 const CartContext = createContext();
 
@@ -12,98 +12,132 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
+  const [cartTotal, setCartTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  // 1. ആപ്പ് ലോഡ് ചെയ്യുമ്പോൾ ബാക്കെൻഡിൽ നിന്ന് കാർട്ട് ഡാറ്റ എടുക്കുന്നു
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const response = await API.get('cart/'); // ബാക്കെൻഡിൽ കാർട്ട് കാണാനുള്ള URL
-        setCart(response.data.items || []);
-      } catch (error) {
-        console.error("Cart fetch error:", error);
-        // ബാക്കെൻഡിൽ നിന്ന് കിട്ടിയില്ലെങ്കിൽ ലോക്കൽ സ്റ്റോറേജ് ഉപയോഗിക്കാം
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) setCart(JSON.parse(savedCart));
-      }
-    };
     fetchCart();
   }, []);
 
-  // 2. ബാക്കെൻഡിലേക്ക് പ്രൊഡക്റ്റ് ആഡ് ചെയ്യുന്നു
-// Update the addToCart function in your CartContext.jsx
-const addToCart = async (product) => {
-  try {
-    const token = localStorage.getItem('token');
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const response = await API.get('/cart/');
+      console.log('Cart response:', response.data);
 
-    // ⚠️ IMPORTANT: Verify if your backend URL is 'cart/add/' or just 'cart/'
-    // Django is sensitive to the trailing slash (the '/' at the end)
-    const response = await API.post('cart/add/', {
-      product_id: product.id,
-      quantity: 1
-    }, {
-      headers: { 
-        Authorization: `Bearer ${token}` 
+      // ✅ Handle different response formats
+      let items = [];
+      
+      if (Array.isArray(response.data)) {
+        items = response.data;
+      } else if (response.data.cart_items && Array.isArray(response.data.cart_items)) {
+        items = response.data.cart_items;
+      } else if (response.data.items && Array.isArray(response.data.items)) {
+        items = response.data.items;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        items = response.data.data;
+      } else {
+        console.log('Empty or invalid cart format, using empty array');
+        items = [];
       }
-    });
 
-    // If the backend returns 200 (OK) or 201 (Created)
-    if (response.status === 200 || response.status === 201) {
-      setCart(prev => [...prev, response.data]);
-      return true;
-    }
-  } catch (error) {
-    console.error("Add to cart failed:", error);
-
-    // If you see a 404 in the console, the URL path below is wrong
-    if (error.response && error.response.status === 404) {
-      alert("API Error: The URL 'cart/add/' was not found on the server. Please check your Django urls.py.");
-    } else {
-      alert("Something went wrong while adding the item to the cart.");
-    }
-  }
-};
-  // 3. ക്വാണ്ടിറ്റി അപ്‌ഡേറ്റ് ചെയ്യുന്നു
-  const updateQuantity = async (productId, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    try {
-      await API.post('cart/update/', { product_id: productId, quantity: newQuantity });
-      setCart((prevCart) =>
-        prevCart.map((item) => (item.id === productId ? { ...item, quantity: newQuantity } : item))
-      );
+      setCartItems(items);
+      
+      // Calculate count and total
+      const count = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      const total = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+      
+      setCartCount(count);
+      setCartTotal(total);
+      
     } catch (error) {
-      console.error("Update failed:", error);
+      console.error('Cart fetch error:', error);
+      setCartItems([]);
+      setCartCount(0);
+      setCartTotal(0);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 4. കാർട്ടിൽ നിന്ന് ഒഴിവാക്കുന്നു
-  const removeFromCart = async (productId) => {
+  const addToCart = async (product, quantity = 1) => {
     try {
-      await API.delete(`cart/remove/${productId}/`);
-      setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+      const response = await API.post('/cart/', {
+        product_id: product.id,
+        quantity: quantity
+      });
+      
+      if (response.status === 200 || response.status === 201) {
+        await fetchCart(); // Refresh cart
+        return { success: true, message: 'Added to cart' };
+      }
     } catch (error) {
-      console.error("Remove failed:", error);
+      console.error('Error adding to cart:', error);
+      return { success: false, message: 'Failed to add to cart' };
     }
   };
 
-  const clearCart = () => {
-    setCart([]);
-    localStorage.removeItem('cart');
+  const updateCartItem = async (itemId, quantity) => {
+    try {
+      const response = await API.put(`/cart/${itemId}/`, { quantity });
+      
+      if (response.status === 200) {
+        await fetchCart();
+        return { success: true, message: 'Cart updated' };
+      }
+    } catch (error) {
+      console.error('Error updating cart:', error);
+      return { success: false, message: 'Failed to update cart' };
+    }
   };
 
-  const cartTotal = cart.reduce((total, item) => total + (item.price || 0) * (item.quantity || 1), 0);
+  const removeFromCart = async (itemId) => {
+    try {
+      const response = await API.delete(`/cart/${itemId}/`);
+      
+      if (response.status === 200 || response.status === 204) {
+        await fetchCart();
+        return { success: true, message: 'Removed from cart' };
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      return { success: false, message: 'Failed to remove from cart' };
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      const response = await API.delete('/cart/clear/');
+      
+      if (response.status === 200) {
+        setCartItems([]);
+        setCartCount(0);
+        setCartTotal(0);
+        return { success: true, message: 'Cart cleared' };
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      return { success: false, message: 'Failed to clear cart' };
+    }
+  };
 
   const value = {
-    cart,
+    cartItems,
+    cartCount,
+    cartTotal,
+    loading,
     addToCart,
-    updateQuantity,
+    updateCartItem,
     removeFromCart,
     clearCart,
-    cartTotal,
+    refreshCart: fetchCart
   };
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+    </CartContext.Provider>
+  );
 };

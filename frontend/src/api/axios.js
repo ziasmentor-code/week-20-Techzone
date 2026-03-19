@@ -1,37 +1,18 @@
 import axios from 'axios';
 
-const API = axios.create({
+const api = axios.create({
   baseURL: 'http://localhost:8000/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
 });
 
-// Request interceptor
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor
-API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('isAdmin');
-      window.location.href = '/admin-login';
-    }
-    return Promise.reject(error);
+// ഓരോ റിക്വസ്റ്റ് അയക്കുമ്പോഴും LocalStorage-ൽ നിന്ന് ടോക്കൺ എടുത്ത് ചേർക്കും
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token'); // നിങ്ങളുടെ ടോക്കൺ കീ ഇവിടെ നൽകുക
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
-export default API;
+export default api;

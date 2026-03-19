@@ -1,10 +1,8 @@
 from django.urls import path
-from . import views
-
-app_name = 'admin_dashboard'
+from .views import admin_products, admin_product_detail, category_list
 
 urlpatterns = [
-    path('login/', views.admin_login, name='login'),
-    path('dashboard/', views.dashboard, name='dashboard'),
-    # REMOVE the api/register/ line from here
+    path('admin/products/', admin_products),
+    path('admin/products/<int:pk>/', admin_product_detail),
+    path('categories/', category_list),
 ]

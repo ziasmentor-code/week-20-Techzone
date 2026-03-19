@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, ShoppingCart, Heart, Package, LogOut, Search, X } from "lucide-react";
+import { User, ShoppingCart, Heart, Package, LogOut, Search, X, LayoutGrid } from "lucide-react"; // LayoutGrid added for Products icon
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from '../context/CartContext';
 
@@ -21,7 +21,8 @@ function Navbar() {
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // ⚠️ ബാക്കെൻഡിൽ 'access' എന്ന പേരിലാണ് ടോക്കൺ സേവ് ചെയ്യുന്നത്
+    const token = localStorage.getItem("access"); 
     setIsLoggedIn(!!token);
   }, [location]);
 
@@ -36,7 +37,7 @@ function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${searchQuery}`);
+      navigate(`/products?search=${searchQuery}`); // Redirect to products with search query
     }
   };
 
@@ -45,7 +46,7 @@ function Navbar() {
       {/* Main Navigation */}
       <nav className="fixed top-0 left-0 w-full bg-black text-white px-4 md:px-10 py-4 flex items-center justify-between z-50 shadow-2xl border-b border-white/10">
         
-        {/* Logo - Home page link - Ensure this works */}
+        {/* Logo */}
         <h1 
           className="text-2xl font-black tracking-tighter cursor-pointer text-[#00e676] hover:text-white transition-colors" 
           onClick={() => navigate("/")}
@@ -80,25 +81,26 @@ function Navbar() {
 
         {/* Right Icons */}
         <div className="flex items-center gap-6">
-          {/* Mobile Search Button */}
-          <button className="md:hidden text-gray-400 hover:text-[#00e676] transition">
-            <Search size={22} />
+          {/* Products Link - Added for easy navigation */}
+          <button 
+            onClick={() => navigate("/products")}
+            className="hidden md:block text-xs font-bold uppercase tracking-widest hover:text-[#00e676] transition"
+          >
+            Products
           </button>
-          
-          {/* Cart Icon with count */}
+
           <button 
             onClick={() => navigate("/cart")} 
             className="relative hover:text-[#00e676] transition group"
           >
             <ShoppingCart size={24} />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-[#00e676] text-black text-[10px] font-bold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-black animate-in zoom-in group-hover:scale-110 transition">
+              <span className="absolute -top-2 -right-2 bg-[#00e676] text-black text-[10px] font-bold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-black">
                 {cartCount}
               </span>
             )}
           </button>
 
-          {/* Account Button */}
           <button 
             onClick={() => setOpen(true)} 
             className="flex items-center gap-2 border border-white/20 px-3 py-1.5 rounded-full hover:bg-white/10 hover:border-[#00e676] transition-all"
@@ -109,7 +111,7 @@ function Navbar() {
         </div>
       </nav>
 
-      {/* Spacer for fixed navbar */}
+      {/* Spacer */}
       <div className="h-20 bg-black"></div>
 
       {/* Sidebar Overlay */}
@@ -121,94 +123,48 @@ function Navbar() {
       )}
 
       {/* User Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-85 bg-[#111] text-white z-[70] transform transition-transform duration-500 ease-in-out shadow-2xl ${open ? "translate-x-0" : "translate-x-full"}`}>
+      <div className={`fixed top-0 right-0 h-full w-80 bg-[#111] text-white z-[70] transform transition-transform duration-500 ease-in-out shadow-2xl ${open ? "translate-x-0" : "translate-x-full"}`}>
         <div className="p-8 flex flex-col h-full">
           
-          {/* Sidebar Header */}
           <div className="flex justify-between items-center mb-10">
             <div>
-              <h2 className="text-2xl font-black tracking-tighter">MY ACCOUNT</h2>
+              <h2 className="text-2xl font-black tracking-tighter uppercase">{isLoggedIn ? "Account" : "Welcome"}</h2>
               <div className="h-1 w-10 bg-[#00e676] mt-1"></div>
             </div>
-            <button 
-              onClick={() => setOpen(false)} 
-              className="p-2 hover:bg-white/10 rounded-full transition"
-            >
+            <button onClick={() => setOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
               <X size={24} />
             </button>
           </div>
 
-          {/* Menu Options */}
           <div className="flex-1 space-y-2">
+            {/* ⚠️ ഈ ലിങ്കാണ് നിങ്ങളെ പ്രോഡക്റ്റ് പേജിലേക്ക് കൊണ്ടുപോകുന്നത് */}
+            <MenuLink 
+              icon={<LayoutGrid size={20}/>} 
+              label="Shop Products" 
+              onClick={() => {
+                navigate("/products"); 
+                setOpen(false);
+              }} 
+            />
+
             {isLoggedIn ? (
               <>
-                <MenuLink 
-                  icon={<User size={20}/>} 
-                  label="My Profile" 
-                  onClick={() => {
-                    navigate("/profile"); 
-                    setOpen(false);
-                  }} 
-                />
-                
-                <MenuLink 
-                  icon={<Package size={20}/>} 
-                  label="My Orders" 
-                  onClick={() => {
-                    navigate("/orders"); 
-                    setOpen(false);
-                  }} 
-                />
-                
-                <MenuLink 
-                  icon={<Heart size={20}/>} 
-                  label="Wishlist" 
-                  onClick={() => {
-                    navigate("/wishlist"); 
-                    setOpen(false);
-                  }} 
-                />
-                
-                {/* Home link in sidebar */}
-                <MenuLink 
-                  icon={<span>🏠</span>} 
-                  label="Home" 
-                  onClick={() => {
-                    navigate("/"); 
-                    setOpen(false);
-                  }} 
-                />
+                <MenuLink icon={<User size={20}/>} label="My Profile" onClick={() => { navigate("/profile"); setOpen(false); }} />
+                <MenuLink icon={<Package size={20}/>} label="My Orders" onClick={() => { navigate("/my-orders"); setOpen(false); }} />
+                <MenuLink icon={<Heart size={20}/>} label="Wishlist" onClick={() => { navigate("/wishlist"); setOpen(false); }} />
                 
                 <div className="pt-8 mt-8 border-t border-white/10">
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-4 p-4 text-red-500 hover:bg-red-500/10 rounded-2xl transition font-bold"
-                  >
+                  <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 text-red-500 hover:bg-red-500/10 rounded-2xl transition font-bold">
                     <LogOut size={20} /> Logout
                   </button>
                 </div>
               </>
             ) : (
               <div className="text-center py-10">
-                <p className="text-gray-400 mb-6">Login to manage your orders and profile.</p>
-                
-                {/* Home link for non-logged users */}
+                <p className="text-gray-400 mb-6 text-sm">Login to explore our tech collection.</p>
                 <button 
-                  onClick={() => {
-                    navigate("/"); 
-                    setOpen(false);
-                  }}
-                  className="w-full bg-gray-800 text-white font-black py-4 rounded-2xl hover:bg-gray-700 transition-all mb-3 uppercase tracking-widest text-sm"
-                >
-                  Go to Home
-                </button>
-                
-                <button 
-                  onClick={() => {
-                    navigate("/login"); 
-                    setOpen(false);
-                  }}
-                  className="w-full bg-[#00e676] text-black font-black py-4 rounded-2xl hover:bg-white transition-all shadow-lg uppercase tracking-widest text-sm"
+                  onClick={() => { navigate("/login"); setOpen(false); }}
+                  className="w-full bg-[#00e676] text-black font-black py-4 rounded-2xl hover:bg-white transition-all shadow-lg uppercase tracking-widest text-xs"
                 >
                   Login / Register
                 </button>
@@ -216,7 +172,6 @@ function Navbar() {
             )}
           </div>
 
-          {/* Footer */}
           <div className="text-center text-[10px] text-gray-600 tracking-[0.2em] uppercase pt-6">
             © TechZone 2026
           </div>
@@ -226,7 +181,6 @@ function Navbar() {
   );
 }
 
-// MenuLink Component
 function MenuLink({ icon, label, onClick }) {
   return (
     <button 
